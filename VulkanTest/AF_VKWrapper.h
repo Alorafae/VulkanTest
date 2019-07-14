@@ -240,7 +240,8 @@ VkResult VK_Shaders_From_SPIRV(DeviceInfo &info, const char *shaderFileName, std
 
 VkResult VK_Framebuffers(DeviceInfo &info, bool IncludeDepth);
 
-//VkResult init_framebuffers(DeviceInfo &info, depthPresent);
+VkResult VK_VertexBuffer(DeviceInfo &info, const void *vertexData, uint32_t dataSize, uint32_t dataStride, bool textured);
+
 //VkResult init_vertex_buffer(DeviceInfo &info, g_vb_solid_face_colors_Data, sizeof(g_vb_solid_face_colors_Data), sizeof(g_vb_solid_face_colors_Data[0]), false);
 //VkResult init_descriptor_pool(DeviceInfo &info, false);
 //VkResult init_descriptor_set(DeviceInfo &info, false);
