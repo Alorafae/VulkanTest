@@ -33,6 +33,11 @@
 #define FRAME_TIME 0.0069444f
 #define NUM_SAMPLES VK_SAMPLE_COUNT_1_BIT
 #define NUM_DESCRIPTOR_SETS 1
+/* Number of viewports and number of scissors have to be the same */
+/* at pipeline creation and in any call to set them dynamically   */
+/* They also have to be the same as each other                    */
+#define NUM_VIEWPORTS 1
+#define NUM_SCISSORS NUM_VIEWPORTS
 
 static const char *vShdTxt =
 "#version 400\n"
@@ -237,16 +242,17 @@ VkResult VK_Shaders_Fix(DeviceInfo &info, const char *vertShaderText, const char
 // angery
 
 VkResult VK_Shaders_From_SPIRV(DeviceInfo &info, const char *shaderFileName, std::vector<char> &shaderCode); // done
+// everything above tested
 
 VkResult VK_Framebuffers(DeviceInfo &info, bool IncludeDepth);
 
-VkResult VK_VertexBuffer(DeviceInfo &info, const void *vertexData, uint32_t dataSize, uint32_t dataStride, bool textured);
+VkResult VK_VertexBuffer(DeviceInfo &info, const void *vertexData, uint32_t dataSize, uint32_t dataStride, bool IsTextured);
 
-//VkResult init_vertex_buffer(DeviceInfo &info, g_vb_solid_face_colors_Data, sizeof(g_vb_solid_face_colors_Data), sizeof(g_vb_solid_face_colors_Data[0]), false);
-//VkResult init_descriptor_pool(DeviceInfo &info, false);
-//VkResult init_descriptor_set(DeviceInfo &info, false);
-//VkResult init_pipeline_cache(DeviceInfo &info);
-//VkResult init_pipeline(DeviceInfo &info, depthPresent);
+VkResult VK_DescriptorPool(DeviceInfo &info, bool IsTextured);
+VkResult VK_DescriptorSet(DeviceInfo &info, bool IsTextured);
+
+VkResult VK_PipelineCache(DeviceInfo &info);
+VkResult VK_Pipeline(DeviceInfo &info, VkBool32 include_depth, VkBool32 include_vi);
 
 
 
