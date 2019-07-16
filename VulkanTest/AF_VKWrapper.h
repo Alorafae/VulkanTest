@@ -64,6 +64,8 @@ static const char *fShdTxt =
 "   outColor = color;\n"
 "}\n";
 
+// vertex data for a cube
+#include "cube_data.h"
 
 /*
 * structure to track all objects related to a texture.
