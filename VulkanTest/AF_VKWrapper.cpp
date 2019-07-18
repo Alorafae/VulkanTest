@@ -262,6 +262,16 @@ VkResult VK_Start_Sequence(DeviceInfo& info)
 
   VK_Framebuffers(info, true);
 
+  VK_VertexBuffer(info, g_vb_solid_face_colors_Data,  sizeof(g_vb_solid_face_colors_Data),  sizeof(g_vb_solid_face_colors_Data[0]), false);
+
+  VK_DescriptorPool(info, false);
+  VK_DescriptorSet(info, false);
+
+  VK_PipelineCache(info);
+  VK_Pipeline(info,  true);
+
+  // COOL ready to start rendering!!!
+
   return VK_SUCCESS;
 }
 

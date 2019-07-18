@@ -32,5 +32,8 @@
     <ClInclude Include="AF_VKWrapper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="cube_data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

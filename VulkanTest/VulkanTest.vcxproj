@@ -149,6 +149,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AF_VKWrapper.h" />
+    <ClInclude Include="cube_data.h" />
     <ClInclude Include="vk_platform.h" />
     <ClInclude Include="vulkan.h" />
   </ItemGroup>

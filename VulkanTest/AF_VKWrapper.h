@@ -254,7 +254,7 @@ VkResult VK_DescriptorPool(DeviceInfo &info, bool IsTextured);
 VkResult VK_DescriptorSet(DeviceInfo &info, bool IsTextured);
 
 VkResult VK_PipelineCache(DeviceInfo &info);
-VkResult VK_Pipeline(DeviceInfo &info, VkBool32 include_depth, VkBool32 include_vi);
+VkResult VK_Pipeline(DeviceInfo &info, VkBool32 include_depth, VkBool32 include_vi = true);
 
 
 
