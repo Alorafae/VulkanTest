@@ -1633,7 +1633,132 @@ VkResult VK_Pipeline(DeviceInfo & info, VkBool32 include_depth, VkBool32 include
   return VkResult();
 }
 
+void VK_Viewports(DeviceInfo & info)
+{
+  info.viewport.height = (float)info.height;
+  info.viewport.width = (float)info.width;
+  info.viewport.minDepth = (float)0.0f;
+  info.viewport.maxDepth = (float)1.0f;
+  info.viewport.x = 0;
+  info.viewport.y = 0;
+  vkCmdSetViewport(info.cmd, 0, NUM_VIEWPORTS, &info.viewport);
+}
 
+void VK_Scissors(DeviceInfo & info)
+{
+  info.scissor.extent.width = info.width;
+  info.scissor.extent.height = info.height;
+  info.scissor.offset.x = 0;
+  info.scissor.offset.y = 0;
+  vkCmdSetScissor(info.cmd, 0, NUM_SCISSORS, &info.scissor);
+}
+
+VkResult VK_RenderCube(DeviceInfo & info)
+{
+  VkResult U_ASSERT_ONLY res;
+
+  VkClearValue clear_values[2];
+  clear_values[0].color.float32[0] = 0.2f;
+  clear_values[0].color.float32[1] = 0.2f;
+  clear_values[0].color.float32[2] = 0.2f;
+  clear_values[0].color.float32[3] = 0.2f;
+  clear_values[1].depthStencil.depth = 1.0f;
+  clear_values[1].depthStencil.stencil = 0;
+
+  VkSemaphore imageAcquiredSemaphore;
+  VkSemaphoreCreateInfo imageAcquiredSemaphoreCreateInfo;
+  imageAcquiredSemaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+  imageAcquiredSemaphoreCreateInfo.pNext = NULL;
+  imageAcquiredSemaphoreCreateInfo.flags = 0;
+
+  res = vkCreateSemaphore(info.device, &imageAcquiredSemaphoreCreateInfo, NULL, &imageAcquiredSemaphore);
+  assert(res == VK_SUCCESS);
+
+  // Get the index of the next available swapchain image:
+  res = vkAcquireNextImageKHR(info.device, info.swap_chain, UINT64_MAX, imageAcquiredSemaphore, VK_NULL_HANDLE,
+    &info.current_buffer);
+  // TODO: Deal with the VK_SUBOPTIMAL_KHR and VK_ERROR_OUT_OF_DATE_KHR
+  // return codes
+  assert(res == VK_SUCCESS);
+
+  VkRenderPassBeginInfo rp_begin;
+  rp_begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  rp_begin.pNext = NULL;
+  rp_begin.renderPass = info.render_pass;
+  rp_begin.framebuffer = info.framebuffers[info.current_buffer];
+  rp_begin.renderArea.offset.x = 0;
+  rp_begin.renderArea.offset.y = 0;
+  rp_begin.renderArea.extent.width = info.width;
+  rp_begin.renderArea.extent.height = info.height;
+  rp_begin.clearValueCount = 2;
+  rp_begin.pClearValues = clear_values;
+
+  vkCmdBeginRenderPass(info.cmd, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
+
+  vkCmdBindPipeline(info.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, info.pipeline);
+  vkCmdBindDescriptorSets(info.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, info.pipeline_layout, 0, NUM_DESCRIPTOR_SETS,
+    info.desc_set.data(), 0, NULL);
+
+  const VkDeviceSize offsets[1] = { 0 };
+  vkCmdBindVertexBuffers(info.cmd, 0, 1, &info.vertex_buffer.buf, offsets);
+
+  VK_Viewports(info);
+  VK_Scissors(info);
+
+  vkCmdDraw(info.cmd, 12 * 3, 1, 0, 0);
+  vkCmdEndRenderPass(info.cmd);
+  res = vkEndCommandBuffer(info.cmd);
+  const VkCommandBuffer cmd_bufs[] = { info.cmd };
+
+  VkFenceCreateInfo fenceInfo;
+  VkFence drawFence;
+  fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceInfo.pNext = NULL;
+  fenceInfo.flags = 0;
+  vkCreateFence(info.device, &fenceInfo, NULL, &drawFence);
+
+  VkPipelineStageFlags pipe_stage_flags = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  VkSubmitInfo submit_info[1] = {};
+  submit_info[0].pNext = NULL;
+  submit_info[0].sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submit_info[0].waitSemaphoreCount = 1;
+  submit_info[0].pWaitSemaphores = &imageAcquiredSemaphore;
+  submit_info[0].pWaitDstStageMask = &pipe_stage_flags;
+  submit_info[0].commandBufferCount = 1;
+  submit_info[0].pCommandBuffers = cmd_bufs;
+  submit_info[0].signalSemaphoreCount = 0;
+  submit_info[0].pSignalSemaphores = NULL;
+
+  /* Queue the command buffer for execution */
+  res = vkQueueSubmit(info.graphics_queue, 1, submit_info, drawFence);
+  assert(res == VK_SUCCESS);
+
+  /* Now present the image in the window */
+
+  VkPresentInfoKHR present;
+  present.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+  present.pNext = NULL;
+  present.swapchainCount = 1;
+  present.pSwapchains = &info.swap_chain;
+  present.pImageIndices = &info.current_buffer;
+  present.pWaitSemaphores = NULL;
+  present.waitSemaphoreCount = 0;
+  present.pResults = NULL;
+
+  /* Make sure command buffer is finished before presenting */
+  do {
+    res = vkWaitForFences(info.device, 1, &drawFence, VK_TRUE, FENCE_TIMEOUT);
+  } while (res == VK_TIMEOUT);
+
+  assert(res == VK_SUCCESS);
+  res = vkQueuePresentKHR(info.present_queue, &present);
+  assert(res == VK_SUCCESS);
+  
+  //res = vkResetCommandBuffer(info.cmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+  //res = vkResetCommandPool(info.device, info.cmd_pool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
+
+  return res;
+}
 
 
 

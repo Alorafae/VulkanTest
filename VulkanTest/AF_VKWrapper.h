@@ -39,6 +39,9 @@
 #define NUM_VIEWPORTS 1
 #define NUM_SCISSORS NUM_VIEWPORTS
 
+/* Amount of time, in nanoseconds, to wait for a command buffer to complete */
+#define FENCE_TIMEOUT 100000000
+
 static const char *vShdTxt =
 "#version 400\n"
 "#extension GL_ARB_separate_shader_objects : enable\n"
@@ -260,8 +263,12 @@ VkResult VK_Pipeline(DeviceInfo &info, VkBool32 include_depth, VkBool32 include_
 
 // end of startup functions
 
+// render?
+void VK_Viewports(DeviceInfo &info);
+void VK_Scissors(DeviceInfo &info);
+VkResult VK_RenderCube(DeviceInfo &info);
 
-
+// end render
 
 
 VkResult VK_Shutdown_Sequence(DeviceInfo& info);

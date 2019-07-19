@@ -10,9 +10,9 @@ int main(void)
 
   VK_Start_Sequence(VK_Engine);
   // actual engine loop here
-  //while(1) //maybe pass the game itself the vulkan engine
+  while(1) //maybe pass the game itself the vulkan engine
   {
-
+    VK_RenderCube(VK_Engine);
   }
   //
   VK_Shutdown_Sequence(VK_Engine);
