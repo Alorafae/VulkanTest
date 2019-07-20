@@ -3,23 +3,30 @@
 
 static DeviceInfo g_VK_Engine_AF;
 
+void Test(DeviceInfo &info)
+{
+  VK_RenderCube(info);
+}
+
 // MS-Windows event handling function:
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-  //struct sample_info *info = reinterpret_cast<struct sample_info *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+  struct DeviceInfo *info = reinterpret_cast<struct DeviceInfo *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
   switch (uMsg) {
   case WM_CLOSE:
     PostQuitMessage(0);
     break;
   case WM_PAINT:
-    //run(info);
+    Test(*info); // 
     return 0;
   default:
     break;
   }
   return (DefWindowProc(hWnd, uMsg, wParam, lParam));
 }
+
+
 
 bool memory_type_from_properties(DeviceInfo & info, uint32_t typeBits, VkFlags requirements_mask, uint32_t * typeIndex)
 {
@@ -228,6 +235,8 @@ EShLanguage FindLanguage(const VkShaderStageFlagBits shader_type)
 
 VkResult VK_Start_Sequence(DeviceInfo& info)
 {
+
+
   info.width = 500;
   info.height = 500;
 
@@ -242,7 +251,15 @@ VkResult VK_Start_Sequence(DeviceInfo& info)
 
   VK_Cmd_Pool(info);
   VK_Cmd_Buffer(info);
-  VK_Exec_Cmd_Buffer(info);
+
+
+
+
+  //VK_Exec_Cmd_Buffer(info);
+
+
+
+
   VK_Device_Queue(info);
   VK_Swapchain(info);
 
@@ -425,7 +442,7 @@ VkResult VK_Create_Window(DeviceInfo &info)
   assert(info.height > 0);
 
   info.connection = GetModuleHandle(NULL);
-  sprintf(info.name, "Sample");
+  swprintf(info.name, L"Sample"); //wide char cus we're using unicode settings in VS
 
   // Initialize the window class structure:
   win_class.cbSize = sizeof(WNDCLASSEX);
@@ -1653,6 +1670,8 @@ void VK_Scissors(DeviceInfo & info)
   vkCmdSetScissor(info.cmd, 0, NUM_SCISSORS, &info.scissor);
 }
 
+static bool first_test = true;
+
 VkResult VK_RenderCube(DeviceInfo & info)
 {
   VkResult U_ASSERT_ONLY res;
@@ -1671,12 +1690,13 @@ VkResult VK_RenderCube(DeviceInfo & info)
   imageAcquiredSemaphoreCreateInfo.pNext = NULL;
   imageAcquiredSemaphoreCreateInfo.flags = 0;
 
+
   res = vkCreateSemaphore(info.device, &imageAcquiredSemaphoreCreateInfo, NULL, &imageAcquiredSemaphore);
   assert(res == VK_SUCCESS);
 
   // Get the index of the next available swapchain image:
-  res = vkAcquireNextImageKHR(info.device, info.swap_chain, UINT64_MAX, imageAcquiredSemaphore, VK_NULL_HANDLE,
-    &info.current_buffer);
+  res = vkAcquireNextImageKHR(info.device, info.swap_chain, UINT64_MAX, imageAcquiredSemaphore, VK_NULL_HANDLE, &info.current_buffer);
+
   // TODO: Deal with the VK_SUBOPTIMAL_KHR and VK_ERROR_OUT_OF_DATE_KHR
   // return codes
   assert(res == VK_SUCCESS);
@@ -1693,21 +1713,32 @@ VkResult VK_RenderCube(DeviceInfo & info)
   rp_begin.clearValueCount = 2;
   rp_begin.pClearValues = clear_values;
 
-  vkCmdBeginRenderPass(info.cmd, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
 
-  vkCmdBindPipeline(info.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, info.pipeline);
-  vkCmdBindDescriptorSets(info.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, info.pipeline_layout, 0, NUM_DESCRIPTOR_SETS,
-    info.desc_set.data(), 0, NULL);
+  // IMPORTANT TO CALL OBVIOUSLY LMAO
+  VK_Exec_Cmd_Buffer(info);
 
-  const VkDeviceSize offsets[1] = { 0 };
-  vkCmdBindVertexBuffers(info.cmd, 0, 1, &info.vertex_buffer.buf, offsets);
 
-  VK_Viewports(info);
-  VK_Scissors(info);
 
-  vkCmdDraw(info.cmd, 12 * 3, 1, 0, 0);
-  vkCmdEndRenderPass(info.cmd);
-  res = vkEndCommandBuffer(info.cmd);
+    vkCmdBeginRenderPass(info.cmd, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdBindPipeline(info.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, info.pipeline);
+    vkCmdBindDescriptorSets(info.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, info.pipeline_layout, 0, NUM_DESCRIPTOR_SETS, info.desc_set.data(), 0, NULL);
+
+    const VkDeviceSize offsets[1] = { 0 };
+    vkCmdBindVertexBuffers(info.cmd, 0, 1, &info.vertex_buffer.buf, offsets);
+
+
+    VK_Viewports(info);
+    VK_Scissors(info);
+
+
+    vkCmdDraw(info.cmd, 12 * 3, 1, 0, 0);
+    vkCmdEndRenderPass(info.cmd);
+    res = vkEndCommandBuffer(info.cmd);
+
+
+
+
   const VkCommandBuffer cmd_bufs[] = { info.cmd };
 
   VkFenceCreateInfo fenceInfo;
@@ -1751,11 +1782,16 @@ VkResult VK_RenderCube(DeviceInfo & info)
   } while (res == VK_TIMEOUT);
 
   assert(res == VK_SUCCESS);
+
   res = vkQueuePresentKHR(info.present_queue, &present);
+
   assert(res == VK_SUCCESS);
   
   //res = vkResetCommandBuffer(info.cmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
   //res = vkResetCommandPool(info.device, info.cmd_pool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
+  vkDestroySemaphore(info.device, imageAcquiredSemaphore, NULL);
+  vkDestroyFence(info.device, drawFence, NULL);
+  //vkResetFences(info.device, 1, &drawFence);
 
   return res;
 }

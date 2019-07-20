@@ -105,7 +105,7 @@ typedef struct {
 struct DeviceInfo
 {
   HINSTANCE connection;        // hInstance - Windows Instance
-  char name[MAX_APP_NAME_LEN]; // Name to put on the window/icon
+  wchar_t name[MAX_APP_NAME_LEN]; // Name to put on the window/icon
   HWND window;                 // hWnd - window handle
 
   VkSurfaceKHR surface;
@@ -270,46 +270,13 @@ VkResult VK_RenderCube(DeviceInfo &info);
 
 // end render
 
+// shutdown
+
+VkResult VK_Destroy_Pipeline(DeviceInfo &info);
+
+
 
 VkResult VK_Shutdown_Sequence(DeviceInfo& info);
-
-/*
-init_global_layer_properties(info);
-init_instance_extension_names(info);
-init_device_extension_names(info);
-init_instance(info, sample_title);
-init_enumerate_device(info);
-
-
-init_window_size(info, 500, 500);
-init_connection(info);
-init_window(info);
-
-
-init_swapchain_extension(info);
-init_device(info);
-
-
-
-
-init_command_pool(info);
-init_command_buffer(info);
-execute_begin_command_buffer(info);
-init_device_queue(info);
-init_swap_chain(info);
-init_depth_buffer(info);
-init_uniform_buffer(info);
-init_descriptor_and_pipeline_layouts(info, false);
-init_renderpass(info, depthPresent);
-init_shaders(info, vertShaderText, fragShaderText);
-init_framebuffers(info, depthPresent);
-init_vertex_buffer(info, g_vb_solid_face_colors_Data, sizeof(g_vb_solid_face_colors_Data),
-sizeof(g_vb_solid_face_colors_Data[0]), false);
-init_descriptor_pool(info, false);
-init_descriptor_set(info, false);
-init_pipeline_cache(info);
-init_pipeline(info, depthPresent);
-*/
 
 /*
 vkDestroySemaphore(info.device, imageAcquiredSemaphore, NULL);
