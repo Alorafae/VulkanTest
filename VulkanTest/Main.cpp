@@ -10,11 +10,14 @@ int main(void)
 
   VK_Start_Sequence(VK_Engine);
   // actual engine loop here
-  while(1) //maybe pass the game itself the vulkan engine
+
+  UpdateWindow(VK_Engine.window);
+
+  MSG msg = {};
+  while(GetMessage(&msg, NULL, 0, 0)) //maybe pass the game itself the vulkan engine
   {
-    //VK_RenderCube(VK_Engine);
-    ShowWindow(VK_Engine.window, 1);
-    UpdateWindow(VK_Engine.window);
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
   }
   //
   VK_Shutdown_Sequence(VK_Engine);

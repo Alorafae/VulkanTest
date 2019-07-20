@@ -17,6 +17,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case WM_CLOSE:
     PostQuitMessage(0);
     break;
+  case WM_DESTROY:
+    PostQuitMessage(0);
+    return 0;
   case WM_PAINT:
     Test(*info); // 
     return 0;
@@ -1789,8 +1792,8 @@ VkResult VK_RenderCube(DeviceInfo & info)
   
   //res = vkResetCommandBuffer(info.cmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
   //res = vkResetCommandPool(info.device, info.cmd_pool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
-  vkDestroySemaphore(info.device, imageAcquiredSemaphore, NULL);
-  vkDestroyFence(info.device, drawFence, NULL);
+  //vkDestroySemaphore(info.device, imageAcquiredSemaphore, NULL);
+  //vkDestroyFence(info.device, drawFence, NULL);
   //vkResetFences(info.device, 1, &drawFence);
 
   return res;

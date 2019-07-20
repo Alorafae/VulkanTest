@@ -28,7 +28,6 @@
 #include "glslang\MachineIndependent\SymbolTable.h"
 #include "SPIRV\GlslangToSpv.h"
 
-
 #define MAX_APP_NAME_LEN 80
 #define FRAME_TIME 0.0069444f
 #define NUM_SAMPLES VK_SAMPLE_COUNT_1_BIT
