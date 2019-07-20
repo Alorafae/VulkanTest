@@ -21,7 +21,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     PostQuitMessage(0);
     return 0;
   case WM_PAINT:
-    Test(*info); // 
+    Test(*info); // game "main"
     return 0;
   default:
     break;
@@ -88,29 +88,6 @@ bool GLSLtoSPV(const VkShaderStageFlagBits shader_type, const char *pshader, std
 
   glslang::GlslangToSpv(*program.getIntermediate(stage), spirv);
   //glslang::GlslangToSpv(*glti, spirv);
-}
-
-bool GLSLtoSPV_Fix(const char * pshader, std::vector<unsigned int>& spirv, glslang::TShader &shader)
-{
-  const char *shaderStrings[1];
-  TBuiltInResource Resources;
-  VK_Shader_Init_Resources(Resources);
-
-  // Enable SPIR-V and Vulkan rules when parsing GLSL
-  EShMessages messages = (EShMessages)(EShMsgSpvRules | EShMsgVulkanRules);
-
-  shaderStrings[0] = pshader;
-  shader.setStrings(shaderStrings, 1);
-
-
-  if (!shader.parse(&Resources, 100, false, messages))
-  {
-    puts(shader.getInfoLog());
-    puts(shader.getInfoDebugLog());
-    return false;  // something didn't work
-  }
-
-  return true;
 }
 
 void VK_Shader_Init_Resources(TBuiltInResource &Resources)
@@ -238,10 +215,8 @@ EShLanguage FindLanguage(const VkShaderStageFlagBits shader_type)
 
 VkResult VK_Start_Sequence(DeviceInfo& info)
 {
-
-
-  info.width = 500;
-  info.height = 500;
+  info.width = 1280;
+  info.height = 720;
 
   VK_Global_Layer_Props(info);
   VK_Instance_Ext_Names(info);
@@ -255,13 +230,7 @@ VkResult VK_Start_Sequence(DeviceInfo& info)
   VK_Cmd_Pool(info);
   VK_Cmd_Buffer(info);
 
-
-
-
   //VK_Exec_Cmd_Buffer(info);
-
-
-
 
   VK_Device_Queue(info);
   VK_Swapchain(info);
@@ -272,13 +241,6 @@ VkResult VK_Start_Sequence(DeviceInfo& info)
   VK_Renderpass(info, true);
 
   VK_Shaders(info, vShdTxt, fShdTxt);
-  //VK_Shaders_Fix(info, vShdTxt, fShdTxt);
-  /*
-  std::vector<char> vertexShaderCode;
-  VK_Shaders_From_SPIRV(info, "vert.spv", vertexShaderCode);
-  std::vector<char> fragShaderCode;
-  VK_Shaders_From_SPIRV(info, "frag.spv", fragShaderCode);
-  */
 
   VK_Framebuffers(info, true);
 
@@ -1201,119 +1163,6 @@ VkResult VK_Shaders(DeviceInfo & info, const char * vertShaderText, const char *
   return res;
 }
 
-VkResult VK_Shaders_Fix(DeviceInfo & info, const char * vertShaderText, const char * fragShaderText)
-{
-  VkResult U_ASSERT_ONLY res;
-  bool U_ASSERT_ONLY retVal;
-
-  // If no shaders were submitted, just return
-  if (!(vertShaderText || fragShaderText))
-    return VK_SUCCESS;
-
-  glslang::InitializeProcess();
-
-  VkShaderModuleCreateInfo moduleCreateInfo;
-
-  std::vector<unsigned int> vtx_spv;
-  EShLanguage vStage = FindLanguage(VK_SHADER_STAGE_VERTEX_BIT);
-  glslang::TShader vShader(vStage);
-
-  if (vertShaderText)
-  {
-    
-    info.shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    info.shaderStages[0].pNext = NULL;
-    info.shaderStages[0].pSpecializationInfo = NULL;
-    info.shaderStages[0].flags = 0;
-    info.shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-    info.shaderStages[0].pName = "main";
-
-
-    
-
-    retVal = GLSLtoSPV_Fix(vertShaderText, vtx_spv, vShader);
-    assert(retVal);
-
-    /*
-    retVal = GLSLtoSPV(VK_SHADER_STAGE_VERTEX_BIT, vertShaderText, vtx_spv);
-    assert(retVal);
-
-    moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    moduleCreateInfo.pNext = NULL;
-    moduleCreateInfo.flags = 0;
-    moduleCreateInfo.codeSize = vtx_spv.size() * sizeof(unsigned int);
-    moduleCreateInfo.pCode = vtx_spv.data();
-    res = vkCreateShaderModule(info.device, &moduleCreateInfo, NULL, &info.shaderStages[0].module);
-    assert(res == VK_SUCCESS);
-    */
-  }
-
-  std::vector<unsigned int> frag_spv;
-  EShLanguage fStage = FindLanguage(VK_SHADER_STAGE_FRAGMENT_BIT);
-  glslang::TShader fShader(fStage);
-
-  if (fragShaderText)
-  {
-    
-    info.shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    info.shaderStages[1].pNext = NULL;
-    info.shaderStages[1].pSpecializationInfo = NULL;
-    info.shaderStages[1].flags = 0;
-    info.shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    info.shaderStages[1].pName = "main";    
-
-    retVal = GLSLtoSPV_Fix(fragShaderText, frag_spv, fShader);
-    assert(retVal);
-
-
-    /*
-    retVal = GLSLtoSPV(VK_SHADER_STAGE_FRAGMENT_BIT, fragShaderText, frag_spv);
-    assert(retVal);
-
-    moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    moduleCreateInfo.pNext = NULL;
-    moduleCreateInfo.flags = 0;
-    moduleCreateInfo.codeSize = frag_spv.size() * sizeof(unsigned int);
-    moduleCreateInfo.pCode = frag_spv.data();
-    res = vkCreateShaderModule(info.device, &moduleCreateInfo, NULL, &info.shaderStages[1].module);
-    assert(res == VK_SUCCESS);
-    */
-  }
-
-  glslang::TProgram program;
-  program.addShader(&vShader);
-  program.addShader(&fShader);
-
-  EShMessages messages = (EShMessages)(EShMsgSpvRules | EShMsgVulkanRules);
-  program.link(messages);
-
-
-  glslang::FinalizeProcess();
-
-  return res;
-}
-
-VkResult VK_Shaders_From_SPIRV(DeviceInfo & info, const char *shaderFileName, std::vector<char> &shaderCode)
-{
-
-  std::ifstream file(shaderFileName, std::ios::ate | std::ios::binary);
-
-  if (!file.is_open())
-  {
-    return VK_ERROR_INVALID_SHADER_NV;
-  }
-
-  size_t fileSize = (size_t)file.tellg();
-  shaderCode.resize(fileSize);
-
-  file.seekg(0);
-  file.read(shaderCode.data(), fileSize);
-
-  file.close();
-
-  return VK_SUCCESS;
-}
-
 VkResult VK_Framebuffers(DeviceInfo & info, bool IncludeDepth)
 {
   /* DEPENDS on init_depth_buffer(), init_renderpass() and
@@ -1789,12 +1638,6 @@ VkResult VK_RenderCube(DeviceInfo & info)
   res = vkQueuePresentKHR(info.present_queue, &present);
 
   assert(res == VK_SUCCESS);
-  
-  //res = vkResetCommandBuffer(info.cmd, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
-  //res = vkResetCommandPool(info.device, info.cmd_pool, VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
-  //vkDestroySemaphore(info.device, imageAcquiredSemaphore, NULL);
-  //vkDestroyFence(info.device, drawFence, NULL);
-  //vkResetFences(info.device, 1, &drawFence);
 
   return res;
 }

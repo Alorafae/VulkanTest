@@ -240,13 +240,8 @@ VkResult VK_Uniform_Buffer(DeviceInfo &info); //done
 VkResult VK_Descriptor_Pipeline_Layouts(DeviceInfo &info, bool use_texture, VkDescriptorSetLayoutCreateFlags descSetLayoutCreateFlags = 0);
 VkResult VK_Renderpass(DeviceInfo &info, bool include_depth, bool clear = true, VkImageLayout finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-// glslang broken?
+// glslang
 VkResult VK_Shaders(DeviceInfo &info, const char *vertShaderText, const char *fragShaderText);
-VkResult VK_Shaders_Fix(DeviceInfo &info, const char *vertShaderText, const char *fragShaderText);
-// angery
-
-VkResult VK_Shaders_From_SPIRV(DeviceInfo &info, const char *shaderFileName, std::vector<char> &shaderCode); // done
-// everything above tested
 
 VkResult VK_Framebuffers(DeviceInfo &info, bool IncludeDepth);
 
