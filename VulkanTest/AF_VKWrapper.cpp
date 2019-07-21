@@ -921,7 +921,7 @@ VkResult VK_Uniform_Buffer(DeviceInfo & info)
 {
   VkResult U_ASSERT_ONLY res;
   bool U_ASSERT_ONLY pass;
-  float fov = glm::radians(45.0f);
+  float fov = glm::radians(90.0f);
 
   if (info.width > info.height)
   {
@@ -1522,8 +1522,6 @@ void VK_Scissors(DeviceInfo & info)
   vkCmdSetScissor(info.cmd, 0, NUM_SCISSORS, &info.scissor);
 }
 
-static bool first_test = true;
-
 VkResult VK_RenderCube(DeviceInfo & info)
 {
   VkResult U_ASSERT_ONLY res;
@@ -1569,24 +1567,20 @@ VkResult VK_RenderCube(DeviceInfo & info)
   // IMPORTANT TO CALL OBVIOUSLY LMAO
   VK_Exec_Cmd_Buffer(info);
 
+  vkCmdBeginRenderPass(info.cmd, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
 
+  vkCmdBindPipeline(info.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, info.pipeline);
+  vkCmdBindDescriptorSets(info.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, info.pipeline_layout, 0, NUM_DESCRIPTOR_SETS, info.desc_set.data(), 0, NULL);
 
-    vkCmdBeginRenderPass(info.cmd, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
+  const VkDeviceSize offsets[1] = { 0 };
+  vkCmdBindVertexBuffers(info.cmd, 0, 1, &info.vertex_buffer.buf, offsets);
 
-    vkCmdBindPipeline(info.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, info.pipeline);
-    vkCmdBindDescriptorSets(info.cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, info.pipeline_layout, 0, NUM_DESCRIPTOR_SETS, info.desc_set.data(), 0, NULL);
+  VK_Viewports(info);
+  VK_Scissors(info);
 
-    const VkDeviceSize offsets[1] = { 0 };
-    vkCmdBindVertexBuffers(info.cmd, 0, 1, &info.vertex_buffer.buf, offsets);
-
-
-    VK_Viewports(info);
-    VK_Scissors(info);
-
-
-    vkCmdDraw(info.cmd, 12 * 3, 1, 0, 0);
-    vkCmdEndRenderPass(info.cmd);
-    res = vkEndCommandBuffer(info.cmd);
+  vkCmdDraw(info.cmd, 12 * 3, 1, 0, 0);
+  vkCmdEndRenderPass(info.cmd);
+  res = vkEndCommandBuffer(info.cmd);
 
 
 
